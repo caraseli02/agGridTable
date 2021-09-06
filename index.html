@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@ag-grid-community/all-modules@26.0.0/dist/styles/ag-grid.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@ag-grid-community/all-modules@26.0.0/dist/styles/ag-theme-material.css"
+    />
+  </head>
+  <body>
+    <h1>Hello from AG Grid!</h1>
+
+    <div
+      id="myGrid"
+      style="height: 600px; width: 100%"
+      class="ag-theme-material"
+    ></div>
+
+    <script type="text/javascript" charset="utf-8">
+      // specify the columns
+      const columnDefs = [];
+
+      // fetch the row data to use and one ready provide it to the Grid via the Grid API
+      agGrid
+        .simpleHttpRequest({
+          url: "http://localhost:3000/events",
+        })
+        .then((data) => {
+          newCols = [];
+          Object.keys(data[0]).forEach((key) => {
+            if (key !== "id") {
+              if (key === "date") {
+                newCols.push({
+                  field: key,
+                  type: ["dateColumn"],
+                  sortable: true,
+                });
+              } else if (key === "from") {
+                newCols.push({
+                  field: key,
+                  checkboxSelection: true,
+                });
+              } else {
+                newCols.push({
+                  field: key,
+                });
+              }
+            }
+
+            console.log(newCols);
+          });
+          gridOptions.api.setColumnDefs(newCols);
+          gridOptions.api.setRowData(data);
+        });
+
+      // let the grid know which columns to use
+      var gridOptions = {
+        columnDefs: columnDefs,
+        pagination: true,
+        rowSelection: "single",
+        animateRows: true,
+
+        defaultColDef: {
+          // set the default column width
+          width: 200,
+          // make every column editable
+          editable: true,
+          // make every column use 'text' filter by default
+          filter: "agTextColumnFilter",
+          // enable floating filters by default
+          floatingFilter: true,
+          // make columns resizable
+          resizable: true,
+        },
+        // define specific column types
+        columnTypes: {
+          // specify we want to use the date filter
+          filter: "agDateColumnFilter",
+          dateColumn: {
+            // specify we want to use the date filter
+            filter: "agDateColumnFilter",
+
+            // add extra parameters for the date filter
+            filterParams: {
+              // provide comparator function
+              comparator: function (filterLocalDateAtMidnight, cellValue) {
+                // In the example application, dates are stored as dd/mm/yyyy
+                // We create a Date object for comparison against the filter date
+                var dateParts = cellValue.split("/");
+                var day = Number(dateParts[0]);
+                var month = Number(dateParts[1]) - 1;
+                var year = Number(dateParts[2]);
+                var cellDate = new Date(year, month, day);
+
+                // Now that both parameters are Date objects, we can compare
+                if (cellDate < filterLocalDateAtMidnight) {
+                  return -1;
+                } else if (cellDate > filterLocalDateAtMidnight) {
+                  return 1;
+                } else {
+                  return 0;
+                }
+              },
+            },
+          },
+        },
+      };
+
+      // lookup the container we want the Grid to use
+      const eGridDiv = document.querySelector("#myGrid");
+
+      // create the grid passing in the div to use together with the columns & data we want to use
+      new agGrid.Grid(eGridDiv, gridOptions);
+    </script>
+  </body>
+</html>
